@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vending Machine Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Kode CSS Dimulai Di Sini -->
+    <style>
+        :root {
+            /* Palet Warna Baru */
+            --bg-color: #FAF7F0;
+            --container-bg: #D8D2C2;
+            --accent-color: #B17457;
+            --text-dark: #4A4947;
+            --text-light: #FAF7F0;
+            --slot-color: #4A4947;
+            --empty-slot-color: #4A4947;
+            --sidebar-bg: #FAF7F0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            /* Background diganti dengan warna off-white dari palet */
+            background-color: var(--bg-color);
+            /* Warna teks utama diganti menjadi abu-abu gelap */
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 3rem;
+            /* Warna judul diganti dengan warna aksen */
+            color: var(--accent-color);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .vending-machine-container {
+            width: 90%;
+            max-width: 800px;
+            /* Background kontainer diganti dengan warna beige dari palet */
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 3px solid var(--slot-color);
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 10px;
+            aspect-ratio: 4 / 5;
+        }
+
+        .product-slot {
+            /* Background slot diganti dengan warna abu-abu gelap dari palet */
+            background-color: var(--slot-color);
+            border: 2px solid #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+            padding: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-slot:hover:not(.empty) {
+            transform: scale(1.05);
+            /* Efek hover menggunakan warna aksen */
+            box-shadow: 0 0 15px rgba(177, 116, 87, 0.7);
+            border-color: var(--accent-color);
+        }
+
+        .product-slot img {
+            max-width: 80%;
+            max-height: 60%;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+
+        .product-id {
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin: 0;
+            /* Teks di dalam slot menggunakan warna terang untuk kontras */
+            color: var(--text-light);
+        }
+
+        .product-price {
+            font-size: 0.9rem;
+            margin: 2px 0 0 0;
+            color: var(--text-light);
+        }
+
+        /* Style untuk slot kosong */
+        .product-slot.empty {
+            background-color: var(--empty-slot-color);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .product-slot.empty::before {
+            content: 'SOLD OUT';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            color: red;
+            font-weight: bold;
+            font-size: 1.2rem;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+
+        /* Sidebar Styles */
+        .order-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100%;
+            /* Background sidebar menggunakan warna background utama */
+            background-color: var(--sidebar-bg);
+            /* Teks sidebar menggunakan warna teks utama */
+            color: var(--text-dark);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+            transition: right 0.3s ease-in-out;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-sidebar.active {
+            right: 0;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .sidebar-content {
+            padding: 60px 20px 20px;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #sidebar-image {
+            max-width: 80%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+
+        #sidebar-name {
+            font-size: 1.8rem;
+            color: var(--text-dark);
+        }
+
+        .sidebar-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            /* Harga di sidebar menggunakan warna aksen */
+            color: var(--accent-color);
+        }
+
+        #sidebar-description {
+            font-size: 1rem;
+            color: #555;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .order-form {
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .order-form label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .order-form input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+
+        .total-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .purchase-btn {
+            width: 100%;
+            padding: 15px;
+            /* Tombol beli menggunakan warna aksen */
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .purchase-btn:hover {
+            background-color: #9b5f47; /* Warna aksen yang sedikit lebih gelap saat hover */
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+    </style>
+    <!-- Kode CSS Berakhir Di Sini -->
+
+</head>
+<body>
+
+    <header>
+        <h1>Vending Machine</h1>
+        <p>Pilih minuman atau makanan favorit Anda</p>
+    </header>
+
+    <main class="vending-machine-container">
+        <div class="product-grid" id="productGrid">
+            <!-- Produk akan di-generate oleh JavaScript -->
+        </div>
+    </main>
+
+    <!-- Overlay untuk menggelapkan background saat sidebar terbuka -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar Informasi Pemesanan -->
+    <aside class="order-sidebar" id="orderSidebar">
+        <button class="close-btn" id="closeBtn">&times;</button>
+        <div class="sidebar-content">
+            <img id="sidebar-image" src="" alt="Produk">
+            <h2 id="sidebar-name">Nama Produk</h2>
+            <p class="sidebar-price" id="sidebar-price">Rp 0</p>
+            <p id="sidebar-description">Deskripsi produk akan muncul di sini.</p>
+            
+            <div class="order-form">
+                <label for="quantity">Jumlah:</label>
+                <input type="number" id="quantity" name="quantity" value="1" min="1">
+                <div class="total-price">
+                    Total: <span id="total-price">Rp 0</span>
+                </div>
+                <button class="purchase-btn" id="purchaseBtn">Beli Sekarang</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Kode JavaScript Dimulai Di Sini -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const productGrid = document.getElementById('productGrid');
+            const orderSidebar = document.getElementById('orderSidebar');
+            const overlay = document.getElementById('overlay');
+            const closeBtn = document.getElementById('closeBtn');
+            const purchaseBtn = document.getElementById('purchaseBtn');
+            const quantityInput = document.getElementById('quantity');
+
+            const sidebarImage = document.getElementById('sidebar-image');
+            const sidebarName = document.getElementById('sidebar-name');
+            const sidebarPrice = document.getElementById('sidebar-price');
+            const sidebarDescription = document.getElementById('sidebar-description');
+            const totalPriceElement = document.getElementById('total-price');
+
+            const products = [
+                // Baris A
+                { id: 'A1', name: 'Aqua', price: 6000, description: 'Air mineral murni dalam kemasan botol 600ml.', type: 'drink', image: 'https://i.imgur.com/gKpMl9s.png' },
+                { id: 'A2', name: 'Teh Pucuk', price: 7000, description: 'Teh manis asli dalam kemasan botol 350ml.', type: 'drink', image: 'https://i.imgur.com/83Y8f2i.png' },
+                { id: 'A3', name: 'Pocari Sweat', price: 8000, description: 'Minuman ion untuk mengganti cairan tubuh yang hilang.', type: 'drink', image: 'https://i.imgur.com/k6P1x0L.png' },
+                { id: 'A4', name: 'Frestea', price: 7000, description: 'Teh dalam kemasan dengan rasa buah yang menyegarkan.', type: 'drink', image: 'https://i.imgur.com/r1sJ1cN.png' },
+                // Baris B
+                { id: 'B1', name: 'Coca-Cola', price: 9000, description: 'Soda klasik yang selalu menjadi favorit.', type: 'drink', image: 'https://i.imgur.com/YpL8Q9U.png' },
+                { id: 'B2', name: 'Sprite', price: 9000, description: 'Soda lemon-lime yang segar dan beriak.', type: 'drink', image: 'https://i.imgur.com/QhJmC9R.png' },
+                { id: 'B3', name: 'You C1000', price: 10000, description: 'Minuman vitamin C dengan rasa jeruk.', type: 'drink', image: 'https://i.imgur.com/8WzE5fV.png' },
+                { id: 'B4', name: 'Ultra Milk', price: 7000, description: 'Susu sapi murni full cream rasa strawberry.', type: 'drink', image: 'https://i.imgur.com/uG1T9pF.png' },
+                // Baris C
+                { id: 'C1', name: 'Chitato', price: 12000, description: 'Keripik kentang berbumbu dengan rasa sapi panggang.', type: 'food', image: 'https://i.imgur.com/WfG1tHc.png' },
+                { id: 'C2', name: 'Taro', price: 8000, description: 'Keripik singkong dengan rasa taro yang lembut dan manis.', type: 'food', image: 'https://i.imgur.com/g21G1tH.png' },
+                { id: 'C3', name: 'Sari Roti', price: 7000, description: 'Roti tawar lembut, cocok untuk sarapan cepat.', type: 'food', image: 'https://i.imgur.com/k2sWfG1.png' },
+                { id: 'C4', name: 'Indomie Goreng', price: 5000, description: 'Mie instan legendaris dengan bumbu rasa original.', type: 'food', image: 'https://i.imgur.com/h2J1k9L.png' },
+                // Baris D
+                { id: 'D1', name: 'Tango', price: 7500, description: 'Wafer cokelat yang renyah dan lezat.', type: 'food', image: 'https://i.imgur.com/l3K1m9N.png' },
+                { id: 'D2', name: 'SilverQueen', price: 15000, description: 'Cokelat batangan dengan kacang mete yang renyah.', type: 'food', image: 'https://i.imgur.com/m4N1o9P.png' },
+                { id: 'D3', name: 'Oreo', price: 10000, description: 'Biskuit cokelat dengan krim vanilla.', type: 'food', image: 'https://i.imgur.com/n5O1q9R.png' },
+                { id: 'D4', name: 'Beng-Beng', price: 6000, description: 'Wafer cokelat dengan isian krim dan karamel.', type: 'food', image: 'https://i.imgur.com/p6P1s9S.png' },
+                // Baris E
+                { id: 'E1', name: 'NutriSari', price: 7000, description: 'Minuman serbuk jeruk dalam kemasan sachet.', type: 'food', image: 'https://i.imgur.com/q7R1t9T.png' },
+                { id: 'E2', name: 'Chocolatos', price: 5000, description: 'Wafer stick dengan cokelat yang lumer di mulut.', type: 'food', image: 'https://i.imgur.com/r8S1u9V.png' },
+                // Dua slot kosong
+                { id: 'E3', name: 'Kosong', price: 0, description: '', type: 'empty' },
+                { id: 'E4', name: 'Kosong', price: 0, description: '', type: 'empty' },
+            ];
+
+            function populateGrid() {
+                productGrid.innerHTML = '';
+                products.forEach(product => {
+                    const slot = document.createElement('div');
+                    slot.classList.add('product-slot');
+                    
+                    if (product.type === 'empty') {
+                        slot.classList.add('empty');
+                        slot.innerHTML = `<p class="product-id">${product.id}</p>`;
+                    } else {
+                        slot.innerHTML = `
+                            <img src="${product.image}" alt="${product.name}">
+                            <p class="product-id">${product.id}</p>
+                            <p class="product-price">Rp ${product.price.toLocaleString('id-ID')}</p>
+                        `;
+                        slot.dataset.name = product.name;
+                        slot.dataset.price = product.price;
+                        slot.dataset.description = product.description;
+                        slot.dataset.image = product.image;
+                    }
+                    productGrid.appendChild(slot);
+                });
+            }
+
+            function openSidebar(productElement) {
+                const name = productElement.dataset.name;
+                const price = productElement.dataset.price;
+                const description = productElement.dataset.description;
+                const image = productElement.dataset.image;
+
+                sidebarName.textContent = name;
+                sidebarPrice.textContent = `Rp ${parseInt(price).toLocaleString('id-ID')}`;
+                sidebarDescription.textContent = description;
+                sidebarImage.src = image;
+                sidebarImage.alt = name;
+                
+                quantityInput.value = 1;
+                updateTotalPrice();
+
+                orderSidebar.classList.add('active');
+                overlay.classList.add('active');
+            }
+
+            function closeSidebar() {
+                orderSidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+
+            function updateTotalPrice() {
+                const price = parseInt(sidebarPrice.textContent.replace('Rp ', '').replace('.', ''));
+                const quantity = parseInt(quantityInput.value);
+                const total = price * quantity;
+                totalPriceElement.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+            }
+
+            productGrid.addEventListener('click', (e) => {
+                const slot = e.target.closest('.product-slot');
+                if (slot && !slot.classList.contains('empty')) {
+                    openSidebar(slot);
+                }
+            });
+
+            closeBtn.addEventListener('click', closeSidebar);
+            overlay.addEventListener('click', closeSidebar);
+            
+            quantityInput.addEventListener('input', updateTotalPrice);
+
+            purchaseBtn.addEventListener('click', () => {
+                const productName = sidebarName.textContent;
+                const quantity = quantityInput.value;
+                const total = totalPriceElement.textContent;
+                alert(`Terima kasih!\nAnda telah membeli ${quantity} x ${productName}.\nTotal: ${total}`);
+                closeSidebar();
+            });
+
+            populateGrid();
+        });
+    </script>
+    <!-- Kode JavaScript Berakhir Di Sini -->
+
+</body>
+</html>
